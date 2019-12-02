@@ -19,5 +19,9 @@ module.exports = {
   },
   rules: {
   },
-  plugins: ['jest']
+  plugins: [
+    'standard',
+    'promise',
+    'jest'
+  ]
 }
