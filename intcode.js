@@ -7,19 +7,19 @@ const Intcode = class {
   }
 
   executeNext () {
-    const opcode = this.programCode[this.programCounter]
+    const opcode = this.fetch(this.programCounter)
     const impl = {
       1: () => {
-        const op1 = this.programCode[this.programCounter + 1]
-        const op2 = this.programCode[this.programCounter + 2]
-        this.programCode[this.programCode[this.programCounter + 3]] = this.programCode[op1] + this.programCode[op2]
+        const arg1 = this.fetch(this.programCounter + 1)
+        const arg2 = this.fetch(this.programCounter + 2)
+        this.memory[this.fetch(this.programCounter + 3)] = this.fetch(arg1) + this.fetch(arg2)
         this.programCounter += 4
         return true
       },
       2: () => {
-        const op1 = this.programCode[this.programCounter + 1]
-        const op2 = this.programCode[this.programCounter + 2]
-        this.programCode[this.programCode[this.programCounter + 3]] = this.programCode[op1] * this.programCode[op2]
+        const arg1 = this.fetch(this.programCounter + 1)
+        const arg2 = this.fetch(this.programCounter + 2)
+        this.memory[this.fetch(this.programCounter + 3)] = this.fetch(arg1) * this.fetch(arg2)
         this.programCounter += 4
         return true
       },
@@ -28,32 +28,38 @@ const Intcode = class {
     return impl[opcode]()
   }
 
-  rollback () {
-    this.programCode[1] = 12
-    this.programCode[2] = 2
+  setInputs (noun, verb) {
+    this.memory[1] = noun
+    this.memory[2] = verb
   }
 
   execute () {
     while (this.executeNext()) {}
   }
 
+  fetch (address) {
+    return this.memory[address]
+  }
+
   get program () {
-    return this.programCode.join(',')
+    return this.memory.join(',')
   }
 
   set program (program) {
-    this.programCode = program.split(',').map((i) => { return parseInt(i) })
+    this.memory = program
+      .split(',')
+      .map((i) => { return parseInt(i) })
   }
 }
 
 if (require.main === module) {
-  fs.readFile('./day_2.input', 'utf8', (err, data) => {
+  fs.readFile('./day_2_input', 'utf8', (err, data) => {
     if (err) throw err
     const program = data.trim()
     const intcode = new Intcode(program)
-    intcode.rollback()
+    intcode.setInputs(31, 46)
     intcode.execute()
-    console.log(intcode.program)
+    console.log(intcode.fetch(0))
   })
 }
 
