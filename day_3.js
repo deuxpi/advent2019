@@ -15,18 +15,17 @@ const Segment = class {
       L: 'H',
       R: 'H'
     }[direction]
+    this.distance = distance
   }
 
   crossingPoint (otherSegment) {
-    let distance = Infinity
-
     if (
       this.orientation === 'V' &&
       otherSegment.orientation === 'H' &&
       this.inside(this.start.y, this.end.y, otherSegment.start.y) &&
       this.inside(otherSegment.start.x, otherSegment.end.x, this.start.x)
     ) {
-      distance = Math.abs(this.start.x) + Math.abs(otherSegment.start.y)
+      return { x: this.start.x, y: otherSegment.start.y }
     }
 
     if (
@@ -35,12 +34,8 @@ const Segment = class {
       this.inside(this.start.x, this.end.x, otherSegment.start.x) &&
       this.inside(otherSegment.start.y, otherSegment.end.y, this.start.y)
     ) {
-      distance = Math.abs(this.start.y) + Math.abs(otherSegment.start.x)
+      return { x: otherSegment.start.x, y: this.start.y }
     }
-
-    if (distance === 0) distance = Infinity
-
-    return distance
   }
 
   inside (p1, p2, q) {
@@ -62,10 +57,49 @@ function makePath (wire) {
 function distance (firstWire, secondWire) {
   const firstPath = makePath(firstWire)
   const secondPath = makePath(secondWire)
+
   return firstPath.reduce((d1, segment) => {
     return Math.min(d1, secondPath.reduce((d2, otherSegment) => {
-      return Math.min(d2, segment.crossingPoint(otherSegment))
+      const point = segment.crossingPoint(otherSegment)
+      if (point && (point.x !== 0 || point.y !== 0)) {
+        return Math.min(d2, Math.abs(point.x) + Math.abs(point.y))
+      } else {
+        return d2
+      }
     }, Infinity))
+  }, Infinity)
+}
+
+function numberOfSteps (firstWire, secondWire) {
+  const firstPath = makePath(firstWire)
+  const secondPath = makePath(secondWire)
+
+  let firstPathSteps = 0
+
+  return firstPath.reduce((d1, segment) => {
+    let secondPathSteps = 0
+
+    const newD1 = secondPath.reduce((d2, otherSegment) => {
+      const point = segment.crossingPoint(otherSegment)
+
+      if (point && (point.x !== 0 || point.y !== 0)) {
+        const d3 = (
+          firstPathSteps +
+          secondPathSteps +
+          Math.abs(segment.start.x - point.x) +
+          Math.abs(segment.start.y - point.y) +
+          Math.abs(otherSegment.start.x - point.x) +
+          Math.abs(otherSegment.start.y - point.y)
+        )
+        d2 = Math.min(d2, d3)
+      }
+
+      secondPathSteps += otherSegment.distance
+      return d2
+    }, Infinity)
+
+    firstPathSteps += segment.distance
+    return Math.min(d1, newD1)
   }, Infinity)
 }
 
@@ -74,7 +108,9 @@ if (require.main === module) {
     if (err) throw err
     const wires = data.trim().split('\n')
     console.log(distance(wires[0], wires[1]))
+    console.log(numberOfSteps(wires[0], wires[1]))
   })
 }
 
-module.exports = distance
+module.exports.distance = distance
+module.exports.numberOfSteps = numberOfSteps
