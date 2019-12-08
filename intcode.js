@@ -3,12 +3,9 @@ const fs = require('fs')
 const Intcode = class {
   constructor (program) {
     this.program = program
-    this.reset()
-  }
-
-  reset () {
+    this.halted = false
     this.programCounter = 0
-    this.input = 1
+    this.inputs = [1]
   }
 
   executeNext () {
@@ -29,14 +26,15 @@ const Intcode = class {
         return true
       },
       3: () => {
-        this.memory[this.load(this.programCounter + 1)] = this.input
+        console.assert(this.inputs.length > 0)
+        this.memory[this.load(this.programCounter + 1)] = this.inputs.shift()
         this.programCounter += 2
         return true
       },
       4: () => {
         this.output = this.load(this.load(this.programCounter + 1), modes[0])
         this.programCounter += 2
-        return true
+        return false
       },
       5: () => {
         const arg1 = this.load(this.programCounter + 1)
@@ -74,7 +72,10 @@ const Intcode = class {
         this.programCounter += 4
         return true
       },
-      99: () => { return false }
+      99: () => {
+        this.halted = true
+        return false
+      }
     }
     return impl[opcode]()
   }
@@ -129,7 +130,7 @@ if (require.main === module) {
     if (err) throw err
     const program = data.trim()
     const intcode = new Intcode(program)
-    intcode.input = 5
+    intcode.inputs = [5]
     intcode.execute()
     console.log(intcode.output)
   })
