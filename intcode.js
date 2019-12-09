@@ -5,6 +5,7 @@ const Intcode = class {
     this.program = program
     this.halted = false
     this.programCounter = 0
+    this.relativeBase = 0
     this.inputs = [1]
   }
 
@@ -14,20 +15,21 @@ const Intcode = class {
       1: () => {
         const arg1 = this.load(this.programCounter + 1)
         const arg2 = this.load(this.programCounter + 2)
-        this.memory[this.load(this.programCounter + 3)] = this.load(arg1, modes[0]) + this.load(arg2, modes[1])
+        this.store(this.load(arg1, modes[0]) + this.load(arg2, modes[1]), this.load(this.programCounter + 3), modes[2])
         this.programCounter += 4
         return true
       },
       2: () => {
         const arg1 = this.load(this.programCounter + 1)
         const arg2 = this.load(this.programCounter + 2)
-        this.memory[this.load(this.programCounter + 3)] = this.load(arg1, modes[0]) * this.load(arg2, modes[1])
+        this.store(this.load(arg1, modes[0]) * this.load(arg2, modes[1]), this.load(this.programCounter + 3), modes[2])
         this.programCounter += 4
         return true
       },
       3: () => {
         console.assert(this.inputs.length > 0)
-        this.memory[this.load(this.programCounter + 1)] = this.inputs.shift()
+        const arg1 = this.load(this.programCounter + 1)
+        this.store(this.inputs.shift(), arg1, modes[0])
         this.programCounter += 2
         return true
       },
@@ -60,7 +62,7 @@ const Intcode = class {
         const arg1 = this.load(this.programCounter + 1)
         const arg2 = this.load(this.programCounter + 2)
         const arg3 = this.load(this.programCounter + 3)
-        this.memory[arg3] = this.load(arg1, modes[0]) < this.load(arg2, modes[1]) ? 1 : 0
+        this.store(this.load(arg1, modes[0]) < this.load(arg2, modes[1]) ? 1 : 0, arg3, modes[2])
         this.programCounter += 4
         return true
       },
@@ -68,8 +70,13 @@ const Intcode = class {
         const arg1 = this.load(this.programCounter + 1)
         const arg2 = this.load(this.programCounter + 2)
         const arg3 = this.load(this.programCounter + 3)
-        this.memory[arg3] = this.load(arg1, modes[0]) === this.load(arg2, modes[1]) ? 1 : 0
+        this.store(this.load(arg1, modes[0]) === this.load(arg2, modes[1]) ? 1 : 0, arg3, modes[2])
         this.programCounter += 4
+        return true
+      },
+      9: () => {
+        this.relativeBase += this.load(this.load(this.programCounter + 1), modes[0])
+        this.programCounter += 2
         return true
       },
       99: () => {
@@ -81,12 +88,21 @@ const Intcode = class {
   }
 
   setInputs (noun, verb) {
-    this.memory[1] = noun
-    this.memory[2] = verb
+    this.store(noun, 1)
+    this.store(verb, 2)
   }
 
   execute () {
     while (this.executeNext()) {}
+  }
+
+  executeAll () {
+    const outputs = []
+    while (!this.halted) {
+      this.execute()
+      if (!this.halted) outputs.push(this.output)
+    }
+    return outputs
   }
 
   parseInstruction (instruction) {
@@ -101,8 +117,27 @@ const Intcode = class {
   load (param, mode) {
     if (mode === 1) {
       return param
+    } else if (mode === 2) {
+      this.expandMemory(param + this.relativeBase)
+      return this.memory[param + this.relativeBase]
     } else {
+      this.expandMemory(param)
       return this.memory[param]
+    }
+  }
+
+  store (value, address, mode) {
+    if (mode === 2) {
+      address += this.relativeBase
+    }
+    this.expandMemory(address)
+    this.memory[address] = value
+  }
+
+  expandMemory (address) {
+    console.assert(address >= 0)
+    while (address >= this.memory.length) {
+      this.memory.push(0)
     }
   }
 
