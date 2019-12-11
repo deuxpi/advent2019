@@ -1,24 +1,15 @@
 module.exports = {
   env: {
-    browser: true,
-    commonjs: true,
     es6: true,
+    node: true,
     'jest/globals': true
   },
   extends: [
+    'eslint:recommended',
     'standard',
     'plugin:jest/recommended',
     'plugin:jest/style'
   ],
-  globals: {
-    Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly'
-  },
-  parserOptions: {
-    ecmaVersion: 2018
-  },
-  rules: {
-  },
   plugins: [
     'standard',
     'promise',

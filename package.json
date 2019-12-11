@@ -2,6 +2,7 @@
   "name": "advent2019",
   "version": "1.0.0",
   "scripts": {
+    "lint": "eslint .",
     "test": "jest"
   },
   "devDependencies": {

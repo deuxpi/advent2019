@@ -93,7 +93,9 @@ const Intcode = class {
   }
 
   execute () {
-    while (this.executeNext()) {}
+    while (this.executeNext()) {
+      // empty
+    }
   }
 
   executeAll () {

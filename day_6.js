@@ -14,7 +14,7 @@ function countOrbits (node, depth) {
   }
 }
 
-function trace(target, planet) {
+function trace (target, planet) {
   if (nodes[planet].includes(target)) {
     return [planet]
   } else if (nodes[planet].length !== 0) {
