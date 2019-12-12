@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { gcd } = require('./algorithms')
 
 const AsteroidField = class {
   constructor (map) {
@@ -76,15 +77,6 @@ const AsteroidField = class {
     }
     return allTargets
   }
-}
-
-function gcd (a, b) {
-  while (b !== 0) {
-    const c = b
-    b = a % b
-    a = c
-  }
-  return Math.abs(a)
 }
 
 if (require.main === module) {
